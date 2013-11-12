@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+basedir = File.dirname(__FILE__)
+argv = ARGV.dup
+type = argv.first
+hooks = argv.drop(1).join(' ')
+
+template = <<-TPL
+#!/usr/bin/env bash
+# vim: set ft=ruby:
+
+# bash/ruby hack extracted from selecta script.
+#   link: https://github.com/garybernhardt/selecta
+
+exec /usr/bin/env ruby --disable-gems -x "$0" $*
+#!ruby
+
+require_relative 'hook'
+
+Hook.new('#{type}', %w[#{hooks}]).call
+TPL
+
+def create_file(name, content)
+  File.open(name, 'w') do |file|
+    file.write content
+    file.chmod(0755)
+  end
+end
+
+if File.exist?(type)
+  $stderr.puts "ERROR: The hook #{type} exists, aborting."
+  exit 1
+end
+
+hook = "#{basedir}/#{type}"
+$stdout.puts ">> git-hooks > creating hook > #{hook}"
+create_file(hook, template)
+
+dir = "#{basedir}/#{type}.d"
+unless File.exist?(dir)
+  Dir.mkdir(dir, 0755)
+  $stdout.puts ">> git-hooks > creating hooks directory > #{dir}"
+end
+
+hooks.split(' ').each do |hook|
+  hook_file = "#{dir}/#{hook}"
+  unless File.exist?(hook_file)
+    $stdout.puts ">> git-hooks > creating hook > #{hook_file}"
+    create_file(hook_file, '# TODO')
+  end
+end

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# vim: set ft=ruby:
+
+# bash/ruby hack extracted from selecta script.
+#   link: https://github.com/garybernhardt/selecta
+
+exec /usr/bin/env ruby --disable-gems -x "$0" $*
+#!ruby
+
+# Modified version of the original hook from BigBinary:
+# - link: http://blog.bigbinary.com/2013/09/19/do-not-allow-force-pusht-to-master.html
+
+class StopForce
+
+  BLACKLIST = %w[master production]
+
+  def call
+    reject if pushing_to_blacklisted? && forced_push?
+  end
+
+  def pushing_to_blacklisted?
+    blacklist = ENV['GIT_HOOKS_BLACKLIST'] || BLACKLIST
+    blacklist.include? current_branch
+  end
+
+  def forced_push?
+    ppid = ENV['GIT_HOOKS_PPID'] || Process.ppid
+    cmd = "ps -ocommand= -p #{ppid}"
+    output = `#{cmd}`
+    output.match(/--force|-f/)
+  end
+
+  def current_branch
+    @current_branch ||= `git rev-parse --abbrev-ref HEAD`.strip
+  end
+
+  def reject
+    messages = ["Your attempt to FORCE PUSH to #{current_branch.upcase} has been rejected."]
+    messages << "If you still want to FORCE PUSH then you need to ignore the pre_push git hook by executing following command."
+    messages << "    $ git push origin #{current_branch} --force --no-verify"
+    feedback messages
+
+    exit 1
+  end
+
+  def feedback(messages)
+    sep = "*" * 40
+    $stdout.puts sep
+    Array(messages).each { |message| $stdout.puts message }
+    $stdout.puts sep
+  end
+end
+
+StopForce.new.call
