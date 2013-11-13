@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Do not commit files with the flag: NOCOMMIT | NO_COMMIT | NO-COMMIT
+
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+  against=HEAD
+else
+  # Initial commit: diff against an empty tree object
+  against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+
+if test "$(git diff --cached $against | grep -i -e 'NO_COMMIT' -e 'NO-COMMIT' -e 'NOCOMMIT')"
+then
+  echo "***********************************************************************"
+  echo "ERROR: Attempt to commit not desired changes"
+  echo
+  echo "The changes are marked as NOCOMMIT or NO-COMMIT or NO_COMMIT."
+  echo "Use one of those flags to check when a change should not be committed."
+  echo "***********************************************************************"
+  echo
+  exit 1
+fi

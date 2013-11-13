@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# vim: set ft=ruby:
+
+# bash/ruby hack extracted from selecta script.
+#   link: https://github.com/garybernhardt/selecta
+
+exec /usr/bin/env ruby --disable-gems -x "$0" $*
+#!ruby
+
+require_relative 'hook'
+
+# Put here the name of the scripts that will be executed
+# when this hook is called.
+# All the scripts must be in the directory:
+#     hooks/pre-commit.d/
+scripts = %w[no-commit]
+
+Hook.new('pre-commit', scripts).call
