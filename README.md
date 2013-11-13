@@ -33,6 +33,11 @@ Check the default hook `pre-push` to check how this works.
 
 Then, you can run `git init` in any new or existing repo to copy the data.
 
+### pre-commit
+
+The hook `no-commit` prevents any commit in which the changes the flags `NOCOMMIT`, `NO-COMMIT`, `NO_COMMIT` are present. It is useful if you made
+temporary changes in the code and you don't want to commit them for whatever reason (changes for development in your machine, etc).
+
 ### pre-push
 
 The default hook given in the repo is a hook to prevent a force push against some blacklisted branches (`master` and `production` by default).
