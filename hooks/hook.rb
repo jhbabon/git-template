@@ -9,7 +9,7 @@ class Hook < Struct.new(:type, :hooks, :basedir)
     hooks.each do |hook|
       cmd = "#{basedir}/#{type}.d/#{hook}"
       $stdout.puts ">> git-hooks > #{type} > #{hook}"
-      $stdout.puts `#{cmd} #{ARGV[0]} #{ARGV[1]}`
+      $stdout.puts `#{cmd} #{ARGV.join(' ')}`
       status = $?.exitstatus
       exit status if status != 0
     end

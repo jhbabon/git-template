@@ -17,7 +17,13 @@ exec /usr/bin/env ruby --disable-gems -x "$0" $*
 
 require_relative 'hook'
 
-Hook.new('#{type}', %w[#{hooks}]).call
+# Put here the name of the scripts that will be executed
+# when this hook is called.
+# All the scripts must be in the directory:
+#     hooks/#{type}.d/
+scripts = %w[#{hooks}]
+
+Hook.new('#{type}', scripts).call
 TPL
 
 def create_file(name, content)
