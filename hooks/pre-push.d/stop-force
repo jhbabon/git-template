@@ -23,15 +23,34 @@ class StopForce
     blacklist.include? current_branch
   end
 
-  def forced_push?
-    ppid = ENV['GIT_HOOKS_PPID'] || Process.ppid
-    cmd = "ps -ocommand= -p #{ppid}"
-    output = `#{cmd}`
-    output.match(/--force|-f/)
-  end
-
   def current_branch
     @current_branch ||= `git rev-parse --abbrev-ref HEAD`.strip
+  end
+
+  def forced_push?
+    input = $stdin.gets
+
+    if input.nil? || input.empty?
+      false
+    else
+      # The pre-push hook receives info about
+      # The commits in this format:
+      #
+      #     <local ref> SP <local sha1> SP <remote ref> SP <remote sha1> LF
+      #
+      # The function to check if is a force push
+      # is extracted from the git-scm.com website:
+      # - link: http://git-scm.com/book/en/Customizing-Git-An-Example-Git-Enforced-Policy
+      #
+      # We see if any commits are reachable from the older revision that
+      # aren’t reachable from the newer one.
+      # If there are none, then it was a fast-forward push;
+      # otherwise, we deny it
+      _, newrev, _, oldrev = input.split(' ')
+      missed_refs = `git rev-list #{newrev}..#{oldrev}`
+      missed_ref_count = missed_refs.split("\n").size
+      missed_ref_count > 0
+    end
   end
 
   def reject
