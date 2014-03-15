@@ -1,18 +1,22 @@
-#!/usr/bin/env bash
-# vim: set ft=ruby:
+#!/usr/bin/env ruby
 
-# bash/ruby hack extracted from selecta script.
-#   link: https://github.com/garybernhardt/selecta
-
-exec /usr/bin/env ruby --disable-gems -x "$0" $*
-#!ruby
-
-require_relative 'hook'
+require_relative "hook"
 
 # Put here the name of the scripts that will be executed
 # when this hook is called.
-# All the scripts must be in the directory:
-#     hooks/pre-commit.d/
-scripts = %w[no-commit]
+scripts = {
+  # These scripts must be in the directory:
+  #     hooks/pre-commit.d/
+  "pre-commit" => %w[no-commit],
 
-Hook.new('pre-commit', scripts).call
+  # You can execute other scripts in other directories,
+  # like `shared` or `utils`:
+  #     hooks/shared.d/
+  # "shared" => %w[noop ctags],
+  # To execute a script in background pass the `:bg` along
+  # with the name of the script, as an array.
+  # Here we can execute the `ctags` script in background:
+  # "shared" => ["noop", ["ctags", :bg]],
+}
+
+Hook.new(scripts).call

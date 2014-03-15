@@ -1,29 +1,33 @@
 #!/usr/bin/env ruby
 
 basedir = File.dirname(__FILE__)
-argv = ARGV.dup
-type = argv.first
-hooks = argv.drop(1).join(' ')
+argv    = ARGV.dup
+type    = argv.first
+hooks   = argv.drop(1).join(' ')
 
 template = <<-TPL
-#!/usr/bin/env bash
-# vim: set ft=ruby:
+#!/usr/bin/env ruby
 
-# bash/ruby hack extracted from selecta script.
-#   link: https://github.com/garybernhardt/selecta
-
-exec /usr/bin/env ruby --disable-gems -x "$0" $*
-#!ruby
-
-require_relative 'hook'
+require_relative "hook"
 
 # Put here the name of the scripts that will be executed
 # when this hook is called.
-# All the scripts must be in the directory:
-#     hooks/#{type}.d/
-scripts = %w[#{hooks}]
+scripts = {
+  # These scripts must be in the directory:
+  #     hooks/#{type}.d/
+  "#{type}" => %w[#{hooks}],
 
-Hook.new('#{type}', scripts).call
+  # You can execute other scripts in other directories,
+  # like `shared` or `utils`:
+  #     hooks/shared.d/
+  # "shared" => %w[noop ctags],
+  # To execute a script in background pass the `:bg` along
+  # with the name of the script, as an array.
+  # Here we can execute the `ctags` script in background:
+  # "shared" => ["noop", ["ctags", :bg]],
+}
+
+Hook.new(scripts).call
 TPL
 
 def create_file(name, content)

@@ -1,11 +1,4 @@
-#!/usr/bin/env bash
-# vim: set ft=ruby:
-
-# bash/ruby hack extracted from selecta script.
-#   link: https://github.com/garybernhardt/selecta
-
-exec /usr/bin/env ruby --disable-gems -x "$0" $*
-#!ruby
+#!/usr/bin/env ruby
 
 # Modified version of the original hook from BigBinary:
 # - link: http://blog.bigbinary.com/2013/09/19/do-not-allow-force-pusht-to-master.html

@@ -6,8 +6,8 @@ require_relative "hook"
 # when this hook is called.
 scripts = {
   # These scripts must be in the directory:
-  #     hooks/pre-push.d/
-  "pre-push" => %w[stop-force],
+  #     hooks/post-commit.d/
+  # "post-commit" => %w[],
 
   # You can execute other scripts in other directories,
   # like `shared` or `utils`:
@@ -16,7 +16,7 @@ scripts = {
   # To execute a script in background pass the `:bg` along
   # with the name of the script, as an array.
   # Here we can execute the `ctags` script in background:
-  # "shared" => ["noop", ["ctags", :bg]],
+  "shared" => [["ctags", :bg]],
 }
 
 Hook.new(scripts).call
