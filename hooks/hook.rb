@@ -11,9 +11,14 @@ class Hook < Struct.new(:config, :basedir)
       hook, target = conf[0], conf[1]
       cmd = "#{basedir}/#{type}.d/#{hook}"
       $stdout.puts ">> git-hooks > #{type} > #{hook}"
-      $stdout.puts `#{build_cmd(cmd, target, stdin)}`
-      status = $?.exitstatus
-      exit status if status != 0
+      if target == :bg || target == :background
+        pid = defer(cmd)
+        $stdout.puts ">> running in background with PID: #{pid}"
+      else
+        $stdout.puts `#{build_cmd(cmd, stdin)}`
+        status = $?.exitstatus
+        exit status if status != 0
+      end
     end
   end
 
@@ -27,16 +32,17 @@ class Hook < Struct.new(:config, :basedir)
     end
   end
 
-  def build_cmd(cmd, target = nil, stdin = nil)
+  def build_cmd(cmd, stdin = nil)
     runner   = "#{cmd} #{ARGV.join(' ')}"
     redirect = "echo \"#{stdin}\"" unless stdin.nil? || stdin.empty?
-    command  = [redirect, runner].compact.join(' | ')
 
-    if target == :bg || target == :background
-      # run the command in background
-      command = "(#{command}) &"
-    end
+    [redirect, runner].compact.join(' | ')
+  end
 
-    command
+  def defer(cmd)
+    pid = fork { exec(cmd) }
+    Process.detach(pid)
+
+    pid
   end
 end
