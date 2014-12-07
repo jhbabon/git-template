@@ -15,44 +15,70 @@ For example, you can do that in the `~/.gitconfig` file:
 
 ## Hooks
 
-You can generate many hooks for one kind of hook. For example, if you want to generate two different hooks for the `pre-commit` stage, you can generate them with:
+You can run many scripts for one kind of hook. For example, if you want to run two different scripts for the `pre-commit` hook, you can generate the hook with:
 
-```sh
-$ hooks/generate pre-commit no-ascii-names skip-nocommit
+```
+$ hooks/generate pre-commit no-ascii-names no-commit
 >> git-hooks > creating hook > hooks/pre-commit
->> git-hooks > creating hooks directory > hooks/pre-commit.d
->> git-hooks > creating hook > hooks/pre-commit.d/no-ascii-names
->> git-hooks > creating hook > hooks/pre-commit.d/no-commit
+>> git-hooks > creating hooks directory > hooks/bin
+>> git-hooks > creating hook > hooks/bin/no-ascii-names
+>> git-hooks > creating hook > hooks/bin/no-commit
 ```
 
-You will have a `pre-commit` hook that runs each of the named scripts inside the `pre-commit.d` dir by default. Those scripts can be any of any kind (`bash`, `python`, etc). Also, you can run any other script in any other directory by passing the type to the hook initializer. For example, if you want to run the same script in different hooks, you can add a `shared` type (will be the `shared.d` directory) and pass it to the `Hook` class:
+You will have a `pre-commit` hook that runs each of the named scripts inside the `bin` directory by default. Those scripts can be of any kind (`bash`, `python`, etc).
+
+Inside the file `.git/hooks/pre-commit` you will see something like this:
 
 ```ruby
-# Adding shared scripts to a post-commit hook
-scripts = {
-  "shared"      => [["ctags", :bg]],
-  "post-commit" => ["send-email"],
-}
-Hook.new(scripts).call
+#!/usr/bin/env ruby
+
+require_relative "hook"
+
+# Call #run_hooks with the name of the scripts that will be
+# executed when this hook is called. Add :& as the last argument
+# to run the scripts in background. Each hook will run in order.
+#
+# All the scripts must be in the directory:
+#
+#     hooks/bin/
+#
+#
+# Example:
+#
+#    # background scripts, they don't stop the execution
+#    # of the git command
+#    run_hooks "bundler", "ctags", :&
+#    # you also can use the #detach_hooks method
+#    detach_hooks "bundler", "ctags"
+#
+#    # normal hook
+#    run_hook "no-commit"
+
+run_hooks "no-ascii-names", "no-commit"
 ```
 
-If you pass an array instead of a string, the second key will indicate if the script will be executed in background (`:bg`, `:background`) or not.
+Note that you can run scripts in background. This is useful when you want to perform some tasks that doesn't need to stop the execution of the git command, like generating tags (e.g: with ctags), or setting up the dependencies (e.g: with bundler). This background processes will log any output to `.git/hooks/log/`.
 
-The new hook sets a environment variable called `GIT_HOOKS_PPID` with the original `git` command `pid`. That can be useful to check the original command run.
+The new hook sets an environment variable called `GIT_HOOKS_PPID` with the original `git` command `pid`. That can be useful to check the original command run.
 
-Then, you can run `git init` in any new or existing repo to copy the data.
+You can run `git init` in any new or existing repo to copy the data.
 
-### pre-commit
+### no-commit
 
-The hook `no-commit` prevents any commit in which the changes the flags `NOCOMMIT`, `NO-COMMIT`, `NO_COMMIT` are present. It is useful if you made
-temporary changes in the code and you don't want to commit them for whatever reason (changes for development in your machine, etc).
+The hook `no-commit` prevents any commit in which the changes the flags `NOCOMMIT`, `NO-COMMIT`, `NO_COMMIT` are present. It is useful if you made temporary changes in the code and you don't want to commit for whatever reason (changes for development in your machine, etc).
 
-### pre-push
+This hook is set in the `pre-commit` hook.
 
-The default hook given in the repo is a hook to prevent a force push against some blacklisted branches (`master` and `production` by default).
+### stop-force
 
-This hook is a small modified version of the original hook from @neerajdotname in this blog post: [Do Not Allow Force Push to Master](http://blog.bigbinary.com/2013/09/19/do-not-allow-force-pusht-to-master.html).
+This script prevents a force push against some blacklisted branches (`master` and `production` by default). Is a small modified version of the original hook from @neerajdotname in this blog post: [Do Not Allow Force Push to Master](http://blog.bigbinary.com/2013/09/19/do-not-allow-force-pusht-to-master.html).
 
-### shared: ctags
+The script is set in the `pre-push` hook.
+
+### ctags
 
 Original script from the original post by @tpope [Effortless Ctags with Git](http://tbaggery.com/2011/08/08/effortless-ctags-with-git.html). This script is executed in the hooks: `post-commit`, `post-checkout` and `post-merge`
+
+### bundler
+
+The script checks the dependencies of your ruby app and install whatever is missing. Also performs a cleanup. Is not enabled by default, it depends more in the project you are working on.

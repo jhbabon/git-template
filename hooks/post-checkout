@@ -2,21 +2,24 @@
 
 require_relative "hook"
 
-# Put here the name of the scripts that will be executed
-# when this hook is called.
-scripts = {
-  # These scripts must be in the directory:
-  #     hooks/post-checkout.d/
-  # "post-checkout" => %w[],
+# Call #run_hooks with the name of the scripts that will be
+# executed when this hook is called. Add :& as the last argument
+# to run the scripts in background. Each hook will run in order.
+#
+# All the scripts must be in the directory:
+#
+#     hooks/bin/
+#
+#
+# Example:
+#
+#    # background scripts, they don't stop the execution
+#    # of the git command
+#    run_hooks "bundler", "ctags", :&
+#    # you also can use the #detach_hooks method
+#    detach_hooks "bundler", "ctags"
+#
+#    # normal hook
+#    run_hook "no-commit"
 
-  # You can execute other scripts in other directories,
-  # like `shared` or `utils`:
-  #     hooks/shared.d/
-  # "shared" => %w[noop ctags],
-  # To execute a script in background pass the `:bg` along
-  # with the name of the script, as an array.
-  # Here we can execute the `ctags` script in background:
-  "shared" => [["ctags", :bg]],
-}
-
-Hook.new(scripts).call
+run_hooks "ctags", :&

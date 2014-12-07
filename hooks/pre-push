@@ -2,21 +2,4 @@
 
 require_relative "hook"
 
-# Put here the name of the scripts that will be executed
-# when this hook is called.
-scripts = {
-  # These scripts must be in the directory:
-  #     hooks/pre-push.d/
-  "pre-push" => %w[stop-force],
-
-  # You can execute other scripts in other directories,
-  # like `shared` or `utils`:
-  #     hooks/shared.d/
-  # "shared" => %w[noop ctags],
-  # To execute a script in background pass the `:bg` along
-  # with the name of the script, as an array.
-  # Here we can execute the `ctags` script in background:
-  # "shared" => ["noop", ["ctags", :bg]],
-}
-
-Hook.new(scripts).call
+run_hook "stop-force"
