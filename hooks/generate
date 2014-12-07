@@ -3,31 +3,34 @@
 basedir = File.dirname(__FILE__)
 argv    = ARGV.dup
 type    = argv.first
-hooks   = argv.drop(1).join(' ')
+hooks   = argv.drop(1)
 
 template = <<-TPL
 #!/usr/bin/env ruby
 
 require_relative "hook"
 
-# Put here the name of the scripts that will be executed
-# when this hook is called.
-scripts = {
-  # These scripts must be in the directory:
-  #     hooks/#{type}.d/
-  "#{type}" => %w[#{hooks}],
+# Call #run_hooks with the name of the scripts that will be
+# executed when this hook is called. Add :& as the last argument
+# to run the scripts in background. Each hook will run in order.
+#
+# All the scripts must be in the directory:
+#
+#     hooks/bin/
+#
+#
+# Example:
+#
+#    # background scripts, they don't stop the execution
+#    # of the git command
+#    run_hooks "bundler", "ctags", :&
+#    # you also can use the #detach_hooks method
+#    detach_hooks "bundler", "ctags"
+#
+#    # normal hook
+#    run_hook "no-commit"
 
-  # You can execute other scripts in other directories,
-  # like `shared` or `utils`:
-  #     hooks/shared.d/
-  # "shared" => %w[noop ctags],
-  # To execute a script in background pass the `:bg` along
-  # with the name of the script, as an array.
-  # Here we can execute the `ctags` script in background:
-  # "shared" => ["noop", ["ctags", :bg]],
-}
-
-Hook.new(scripts).call
+run_hooks #{hooks.map { |h| %Q("#{h}") }.join(", ")}
 TPL
 
 def create_file(name, content)
@@ -46,14 +49,14 @@ hook = "#{basedir}/#{type}"
 $stdout.puts ">> git-hooks > creating hook > #{hook}"
 create_file(hook, template)
 
-dir = "#{basedir}/#{type}.d"
+dir = "#{basedir}/bin"
 unless File.exist?(dir)
   Dir.mkdir(dir, 0755)
   $stdout.puts ">> git-hooks > creating hooks directory > #{dir}"
 end
 
-hooks.split(' ').each do |hook|
-  hook_file = "#{dir}/#{hook}"
+hooks.each do |h|
+  hook_file = "#{dir}/#{h}"
   unless File.exist?(hook_file)
     $stdout.puts ">> git-hooks > creating hook > #{hook_file}"
     create_file(hook_file, '# TODO')

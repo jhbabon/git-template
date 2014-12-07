@@ -1,5 +1,5 @@
-#!/bin/sh
-#
+#!/usr/bin/env sh
+
 # Do not commit files with the flag: NOCOMMIT | NO_COMMIT | NO-COMMIT
 
 if git rev-parse --verify HEAD >/dev/null 2>&1
