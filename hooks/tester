@@ -1,6 +1,0 @@
-#!/usr/bin/env ruby
-
-require_relative "runner"
-
-run_hooks "slow", "noop", "wrong", :&
-run_hooks "slow", "noop", "wrong"
