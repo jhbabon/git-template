@@ -67,7 +67,7 @@ module Hook
         Runner.new(name, log, errlog, @bindir, @echo_input, @args)
       end
 
-      prompt names.join(", ")
+      prompt names.join(" && ")
       pid = defer(runners)
       prompt "running in background with PID: #{pid}"
       prompt "log file: #{log.path}"
