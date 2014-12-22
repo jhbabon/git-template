@@ -1,76 +1,91 @@
 module Hook
-  class ExecutionError < StandardError; end
+  class ExecutionError < StandardError
+    attr_reader :exitstatus
 
-  class Runner < Struct.new(:name, :output, :err, :bindir, :echo_input, :args)
+    def initialize(message, exitstatus)
+      @exitstatus = exitstatus
+      super message
+    end
+  end
+
+  class Runner
     def self.call(*args)
       new(*args).call
     end
 
+    def initialize(name, command, content, output, err)
+      @name    = name
+      @command = command
+      @content = content
+      @output  = output
+      @err     = err
+    end
+
     def call
-      system command, :out => output, :err => err
+      copy_input do |input|
+        system @command, :in => input, :out => @output, :err => @err
+      end
 
       status = $?.exitstatus
       if status != 0
-        raise ExecutionError, "ERROR: Command '#{name}' finished with status #{status}"
+        error = ExecutionError.new(
+          "ERROR: Command '#{@name}' finished with status #{status}",
+          status
+        )
+
+        raise error
       end
 
       status
     end
 
-    def command
-      [echo_input, "#{bindir}/#{name} #{args}"].compact.join(" | ")
+    def copy_input
+      IO.pipe do |reader, writer|
+        writer.write @content
+        writer.close
+        yield reader
+      end
     end
   end
 
   class Dispatcher
     def initialize(output = $stdout, input = $stdin, err = $stderr)
-      @output  = output
-      @input   = input
-      @err     = err
+      @output = output
+      @input  = input
+      @err    = err
 
       @logsdir = "#{File.dirname(__FILE__)}/log"
       @bindir  = "#{File.dirname(__FILE__)}/bin"
-      ensure_logsdir
-
-      @echo_input = build_echo_input
-      @args       = ARGV.join(" ")
-
-      ENV['GIT_HOOKS_PPID'] = Process.ppid.to_s
-    end
-
-    def ensure_logsdir
       Dir.mkdir(@logsdir) unless Dir.exist?(@logsdir)
-    end
 
-    def build_echo_input
-      content = @input.gets
-      unless content.nil? || content.empty?
-        "echo '#{content}'"
-      end
+      @content = @input.read
+      @args    = ARGV.join(" ")
+
+      ENV["GIT_HOOKS_PPID"] = Process.ppid.to_s
     end
 
     def run(names)
       Array(names).each do |name|
         handle_error do
           prompt name
-          Runner.call(name, @output, @err, @bindir, @echo_input, @args)
+          Runner.call(name, command(name), @content, @output, @err)
         end
       end
     end
 
     def run_background(names)
-      log = File.new("#{@logsdir}/#{names.join('-')}.log", "w")
-      errlog = File.new("#{@logsdir}/#{names.join('-')}.err.log", "w")
+      log    = "#{@logsdir}/#{names.join("-")}.log"
+      errlog = "#{@logsdir}/#{names.join("-")}.err.log"
 
       names   = Array(names)
       runners = names.map do |name|
-        Runner.new(name, log, errlog, @bindir, @echo_input, @args)
+        Runner.new(name, command(name), @content, log, errlog)
       end
 
       prompt names.join(" && ")
       pid = defer(runners)
       prompt "running in background with PID: #{pid}"
-      prompt "log file: #{log.path}"
+      prompt "log file: #{log}"
     end
     alias_method :&, :run_background
 
@@ -89,7 +104,11 @@ module Hook
       yield
     rescue ExecutionError => e
       @err.puts "!> git-hooks > #{e.message}"
-      exit 1
+      exit e.exitstatus
+    end
+
+    def command(name)
+      "#{@bindir}/#{name} #{@args}"
     end
 
     def prompt(message)
