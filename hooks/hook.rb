@@ -120,9 +120,9 @@ end
 def run_hooks(*hooks)
   @__hook_dispatcher__ ||= Hook::Dispatcher.new
 
-  method = :run
+  method = "run"
   names  = hooks.dup
-  if [:run, :run_background, :&].include?(names.last)
+  if %w(run run_background &).include?(names.last.to_s)
     method = names.pop
   end
 
@@ -134,7 +134,7 @@ def run_hook(*hooks)
 end
 
 def detach_hooks(*hooks)
-  hooks = hooks + [:&]
+  hooks = hooks + ["&"]
   run_hooks(*hooks)
 end
 

@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# Custom setup for ruby projects. After cloning or init
+# the repository, execute:
+#
+#     $ cd .git/hooks
+#     $ ./ruby-setup
+
+./generate pre-commit no-commit
+./generate pre-push stop-force
+./generate post-checkout bundler ctags "&"
+./generate post-commit bundler ctags "&"
+./generate post-merge bundler ctags "&"

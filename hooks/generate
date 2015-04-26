@@ -23,7 +23,7 @@ require File.expand_path("hook", File.dirname(__FILE__))
 #
 #    # background scripts, they don't stop the execution
 #    # of the git command
-#    run_hooks "bundler", "ctags", :&
+#    run_hooks "bundler", "ctags", "&"
 #    # you also can use the #detach_hooks method
 #    detach_hooks "bundler", "ctags"
 #
@@ -56,6 +56,7 @@ unless File.exist?(dir)
 end
 
 hooks.each do |h|
+  next if h == "&"
   hook_file = "#{dir}/#{h}"
   unless File.exist?(hook_file)
     $stdout.puts ">> git-hooks > creating hook > #{hook_file}"
