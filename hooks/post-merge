@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
 
-require_relative "hook"
+require File.expand_path("hook", File.dirname(__FILE__))
 
 run_hook "ctags", :&

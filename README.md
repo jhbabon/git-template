@@ -32,7 +32,7 @@ Inside the file `.git/hooks/pre-commit` you will see something like this:
 ```ruby
 #!/usr/bin/env ruby
 
-require_relative "hook"
+require File.expand_path("hook", File.dirname(__FILE__))
 
 # Call #run_hooks with the name of the scripts that will be
 # executed when this hook is called. Add :& as the last argument
